@@ -1,0 +1,17 @@
+{
+    "name": "Math Snip to LaTeX",
+    "description": "Snip math from the current tab and convert to LaTeX via a local OCR server.",
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "permissions": ["activeTab", "tabs"],
+    "action": {
+      "default_title": "Math Snip to LaTeX",
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+      }
+    }
+  }
+  

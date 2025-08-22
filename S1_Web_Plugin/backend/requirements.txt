@@ -1,0 +1,6 @@
+flask==3.0.3
+flask-cors==5.0.0
+pillow==10.4.0
+
+# For real OCR, uncomment the next line and install GPU/torch stack as needed:
+# pix2tex
