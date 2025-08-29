@@ -1,0 +1,62 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Training Dashboard</title>
+  <!-- Plotly from CDN -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h1>Training Progress</h1>
+
+  <div id="loss_chart"></div>
+  <div id="acc_chart"></div>
+  <div id="lr_chart"></div>
+  <div id="time_chart"></div>
+
+  <script>
+    // Arrays to store data
+    let epochs = [], train_loss = [], val_loss = [], acc = [], lr = [], epoch_time = [];
+
+    function updateCharts() {
+      fetch("/metrics")
+        .then(res => res.json())
+        .then(data => {
+          epochs.push(data.epoch);
+          train_loss.push(data.train_loss);
+          val_loss.push(data.val_loss);
+          acc.push(data.accuracy);
+          lr.push(data.lr);
+          epoch_time.push(data.time_per_epoch);
+
+          // Training vs Validation Loss
+          Plotly.newPlot("loss_chart", [
+            {x: epochs, y: train_loss, name: "Train Loss"},
+            {x: epochs, y: val_loss, name: "Val Loss"}
+          ], {title: "Loss vs Epoch"});
+
+          // Accuracy
+          Plotly.newPlot("acc_chart", [
+            {x: epochs, y: acc, name: "Accuracy"}
+          ], {title: "Accuracy vs Epoch"});
+
+          // Learning Rate
+          Plotly.newPlot("lr_chart", [
+            {x: epochs, y: lr, name: "Learning Rate"}
+          ], {title: "LR vs Epoch"});
+
+          // Time per Epoch
+          Plotly.newPlot("time_chart", [
+            {x: epochs, y: epoch_time, name: "Time per Epoch"}
+          ], {title: "Time per Epoch"});
+        });
+    }
+
+    // Refresh every 5 seconds
+    setInterval(updateCharts, 5000);
+
+    // Initial load
+    updateCharts();
+  </script>
+</body>
+</html>
