@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MCQ Generator</title>
+</head>
+<body>
+  <h2>Paste Paragraph</h2>
+  <textarea id="inputText" rows="6" cols="60"></textarea><br>
+  <button onclick="generateMCQs()">Generate MCQs</button>
+
+  <div id="mcqSection" style="display:none;">
+    <h2>MCQs</h2>
+    <form id="quizForm"></form>
+    <button type="button" onclick="submitQuiz()">Submit</button>
+    <div id="result"></div>
+  </div>
+
+<script>
+let correctAnswers = [];
+
+async function generateMCQs() {
+  const text = document.getElementById("inputText").value;
+  const res = await fetch("/generate_mcqs", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({text})
+  });
+  const data = await res.json();
+
+  if (data.error) {
+    alert("Error: " + data.error);
+    return;
+  }
+
+  correctAnswers = data.questions.map(q => q.answer);
+
+  const quizForm = document.getElementById("quizForm");
+  quizForm.innerHTML = "";
+
+  data.questions.forEach((q, idx) => {
+    let qHtml = `<p>${idx+1}. ${q.question}</p>`;
+    q.options.forEach(opt => {
+      qHtml += `<label><input type="radio" name="q${idx}" value="${opt}"> ${opt}</label><br>`;
+    });
+    quizForm.innerHTML += qHtml;
+  });
+
+  document.getElementById("mcqSection").style.display = "block";
+}
+
+async function submitQuiz() {
+  const formData = new FormData(document.getElementById("quizForm"));
+  const userAnswers = [];
+
+  for (let i = 0; i < correctAnswers.length; i++) {
+    const ans = formData.get("q"+i);
+    userAnswers.push(ans ? ans : "");  // store "" if not answered
+  }
+
+  const res = await fetch("/check_answers", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({answers: userAnswers, correct_answers: correctAnswers})
+  });
+
+  const data = await res.json();
+  document.getElementById("result").innerText =
+    `Your Score: ${data.score} / ${data.total}`;
+}
+
+</script>
+</body>
+</html>
