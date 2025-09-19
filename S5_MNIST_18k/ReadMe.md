@@ -7,8 +7,8 @@ This repository contains a Jupyter Notebook (`MNIST_Opimized_Model.ipynb`) that 
 The primary goal of this project was to develop an MNIST classifier that adheres to the following constraints:
 
 *   **Number of Parameters**: 18.5k
-*   **Number of Epochs**: 10
-*   **Efficiency/Accuracy**: 99.11%
+*   **Number of Epochs**: 20
+*   **Efficiency/Accuracy**: 99.42%
 
 ## Model Architecture
 
@@ -20,7 +20,7 @@ Total params: 18,406
 Trainable params: 18,406
 Non-trainable params: 0
 
-The model achieved an accuracy of **99.11%**. While this is very close to the target of 99.4%, it indicates that further training (up to the specified 20 epochs) or minor hyperparameter tuning might be needed to fully meet the efficiency constraint.
+The model achieved an accuracy of **99.42%**. 
 
 Logs:
 ```
