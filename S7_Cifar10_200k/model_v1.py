@@ -20,50 +20,54 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         # 🔹 First block (unchanged)
-        self.conv11 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1)     
-        self.batch11 = nn.BatchNorm2d(16)
-        self.conv12 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=3, padding=1)
-        self.batch12 = nn.BatchNorm2d(16)
-        self.conv13 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=3, padding=1)
-        self.batch13 = nn.BatchNorm2d(16)
-        self.conv14 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=1)
-        self.batch14 = nn.BatchNorm2d(32)
+        BLK_1_CH = 32
+        BLK_2_CH = 64
+        BLK_3_CH = 128
+
+        self.conv11 = nn.Conv2d(in_channels=3, out_channels=BLK_1_CH, kernel_size=3, padding=1)     
+        self.batch11 = nn.BatchNorm2d(BLK_1_CH)
+        self.conv12 = nn.Conv2d(in_channels=BLK_1_CH, out_channels=BLK_1_CH, kernel_size=3, padding=1)
+        self.batch12 = nn.BatchNorm2d(BLK_1_CH)
+        self.conv13 = nn.Conv2d(in_channels=BLK_1_CH, out_channels=BLK_1_CH, kernel_size=3, padding=1)
+        self.batch13 = nn.BatchNorm2d(BLK_1_CH)
+        self.conv14 = nn.Conv2d(in_channels=BLK_1_CH, out_channels=BLK_2_CH, kernel_size=1)
+        self.batch14 = nn.BatchNorm2d(BLK_2_CH)
         self.pool14 = nn.MaxPool2d(2, 2)          
         
-        self.conv21 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)   
-        self.batch21 = nn.BatchNorm2d(32)
-        self.conv22 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
-        self.batch22 = nn.BatchNorm2d(32)
-        self.conv23 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
-        self.batch23 = nn.BatchNorm2d(32)
-        self.conv24 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=1)
-        self.batch24 = nn.BatchNorm2d(64)
-        self.pool24 = nn.MaxPool2d(2, 2)                                            
+        # self.conv21 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)   
+        # self.batch21 = nn.BatchNorm2d(32)
+        # self.conv22 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
+        # self.batch22 = nn.BatchNorm2d(32)
+        # self.conv23 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
+        # self.batch23 = nn.BatchNorm2d(32)
+        # self.conv24 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=1)
+        # self.batch24 = nn.BatchNorm2d(64)
+        # self.pool24 = nn.MaxPool2d(2, 2)                                            
 
         # 🔹 Second block (Depthwise Separable)
-        # self.conv21 = DepthwiseSeparableConv(32, 32)
-        # self.batch21 = nn.BatchNorm2d(32)
-        # self.conv22 = DepthwiseSeparableConv(32, 32)
-        # self.batch22 = nn.BatchNorm2d(32)
-        # self.conv23 = DepthwiseSeparableConv(32, 32)
-        # self.batch23 = nn.BatchNorm2d(32)
-        # self.conv24 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=1)  # keep 1x1 as-is
-        # self.batch24 = nn.BatchNorm2d(64)
-        # self.pool24 = nn.MaxPool2d(2, 2)                                                     
+        self.conv21 = DepthwiseSeparableConv(BLK_2_CH, BLK_2_CH)
+        self.batch21 = nn.BatchNorm2d(BLK_2_CH)
+        self.conv22 = DepthwiseSeparableConv(BLK_2_CH, BLK_2_CH)
+        self.batch22 = nn.BatchNorm2d(BLK_2_CH)
+        self.conv23 = DepthwiseSeparableConv(BLK_2_CH, BLK_2_CH)
+        self.batch23 = nn.BatchNorm2d(BLK_2_CH)
+        self.conv24 = nn.Conv2d(in_channels=BLK_2_CH, out_channels=BLK_3_CH, kernel_size=1)  # keep 1x1 as-is
+        self.batch24 = nn.BatchNorm2d(BLK_3_CH)
+        self.pool24 = nn.MaxPool2d(2, 2)                                                     
 
         # 🔹 Third block (Depthwise Separable)
-        self.conv31 = DepthwiseSeparableConv(64, 64)
-        self.batch31 = nn.BatchNorm2d(64)
-        self.conv32 = DepthwiseSeparableConv(64, 64)
-        self.batch32 = nn.BatchNorm2d(64)
-        self.conv33 = DepthwiseSeparableConv(64, 64)
-        self.batch33 = nn.BatchNorm2d(64)
-        self.conv34 = nn.Conv2d(in_channels=64, out_channels=128, kernel_size=1)  # keep 1x1 as-is
-        self.batch34 = nn.BatchNorm2d(128)
+        self.conv31 = DepthwiseSeparableConv(BLK_3_CH, BLK_3_CH)
+        self.batch31 = nn.BatchNorm2d(BLK_3_CH)
+        self.conv32 = DepthwiseSeparableConv(BLK_3_CH, BLK_3_CH)
+        self.batch32 = nn.BatchNorm2d(BLK_3_CH)
+        self.conv33 = DepthwiseSeparableConv(BLK_3_CH, BLK_3_CH)
+        self.batch33 = nn.BatchNorm2d(BLK_3_CH)
+        self.conv34 = nn.Conv2d(in_channels=BLK_3_CH, out_channels=BLK_3_CH, kernel_size=1)  # keep 1x1 as-is
+        self.batch34 = nn.BatchNorm2d(BLK_3_CH)
         self.pool34 = nn.MaxPool2d(2, 2)
 
         # 🔹 Final classifier
-        self.conv_last = nn.Conv2d(in_channels=128, out_channels=10, kernel_size=1)
+        self.conv_last = nn.Conv2d(in_channels=BLK_3_CH, out_channels=10, kernel_size=1)
 
     def forward(self, x):
         # Block 1
