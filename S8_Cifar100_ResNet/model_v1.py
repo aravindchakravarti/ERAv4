@@ -2,97 +2,146 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# Depthwise Separable Convolution Block
-class DepthwiseSeparableConv(nn.Module):
+# -----------------------------------
+# 1️⃣ Helper: Depthwise-Separable Conv
+# -----------------------------------
+class DepthwiseSeparableConv2d(nn.Module):
+    """Depthwise + Pointwise conv block"""
     def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False):
-        super(DepthwiseSeparableConv, self).__init__()
+        super().__init__()
         self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size,
                                    stride=stride, padding=padding, groups=in_channels, bias=bias)
         self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=bias)
 
     def forward(self, x):
-        out = self.depthwise(x)
-        out = self.pointwise(out)
+        x = self.depthwise(x)
+        x = self.pointwise(x)
+        return x
+
+
+# -----------------------------------
+# 2️⃣ Standard BasicBlock (normal ResNet)
+# -----------------------------------
+class BasicBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, in_channels, out_channels, stride=1, downsample=None):
+        super().__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3,
+                               stride=stride, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3,
+                               stride=1, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
+
+    def forward(self, x):
+        identity = x
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+        out = self.conv2(out)
+        out = self.bn2(out)
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        out += identity
+        out = self.relu(out)
         return out
 
 
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        # 🔹 First block (unchanged)
-        BLK_1_CH = 32
-        BLK_2_CH = 64
-        BLK_3_CH = 128
+# -----------------------------------
+# 3️⃣ Depthwise BasicBlock
+# -----------------------------------
+class DepthwiseBasicBlock(nn.Module):
+    expansion = 1
 
-        self.conv11 = nn.Conv2d(in_channels=3, out_channels=BLK_1_CH, kernel_size=3, padding=1)     
-        self.batch11 = nn.BatchNorm2d(BLK_1_CH)
-        self.conv12 = nn.Conv2d(in_channels=BLK_1_CH, out_channels=BLK_1_CH, kernel_size=3, padding=1)
-        self.batch12 = nn.BatchNorm2d(BLK_1_CH)
-        self.conv13 = nn.Conv2d(in_channels=BLK_1_CH, out_channels=BLK_1_CH, kernel_size=3, padding=1)
-        self.batch13 = nn.BatchNorm2d(BLK_1_CH)
-        self.conv14 = nn.Conv2d(in_channels=BLK_1_CH, out_channels=BLK_2_CH, kernel_size=1)
-        self.batch14 = nn.BatchNorm2d(BLK_2_CH)
-        self.pool14 = nn.MaxPool2d(2, 2)          
-        
-        # self.conv21 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)   
-        # self.batch21 = nn.BatchNorm2d(32)
-        # self.conv22 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
-        # self.batch22 = nn.BatchNorm2d(32)
-        # self.conv23 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
-        # self.batch23 = nn.BatchNorm2d(32)
-        # self.conv24 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=1)
-        # self.batch24 = nn.BatchNorm2d(64)
-        # self.pool24 = nn.MaxPool2d(2, 2)                                            
-
-        # 🔹 Second block (Depthwise Separable)
-        self.conv21 = DepthwiseSeparableConv(BLK_2_CH, BLK_2_CH)
-        self.batch21 = nn.BatchNorm2d(BLK_2_CH)
-        self.conv22 = DepthwiseSeparableConv(BLK_2_CH, BLK_2_CH)
-        self.batch22 = nn.BatchNorm2d(BLK_2_CH)
-        self.conv23 = DepthwiseSeparableConv(BLK_2_CH, BLK_2_CH)
-        self.batch23 = nn.BatchNorm2d(BLK_2_CH)
-        self.conv24 = nn.Conv2d(in_channels=BLK_2_CH, out_channels=BLK_3_CH, kernel_size=1)  # keep 1x1 as-is
-        self.batch24 = nn.BatchNorm2d(BLK_3_CH)
-        self.pool24 = nn.MaxPool2d(2, 2)                                                     
-
-        # 🔹 Third block (Depthwise Separable)
-        self.conv31 = DepthwiseSeparableConv(BLK_3_CH, BLK_3_CH)
-        self.batch31 = nn.BatchNorm2d(BLK_3_CH)
-        self.conv32 = DepthwiseSeparableConv(BLK_3_CH, BLK_3_CH)
-        self.batch32 = nn.BatchNorm2d(BLK_3_CH)
-        self.conv33 = DepthwiseSeparableConv(BLK_3_CH, BLK_3_CH)
-        self.batch33 = nn.BatchNorm2d(BLK_3_CH)
-        self.conv34 = nn.Conv2d(in_channels=BLK_3_CH, out_channels=BLK_3_CH, kernel_size=1)  # keep 1x1 as-is
-        self.batch34 = nn.BatchNorm2d(BLK_3_CH)
-        self.pool34 = nn.MaxPool2d(2, 2)
-
-        # 🔹 Final classifier
-        self.conv_last = nn.Conv2d(in_channels=BLK_3_CH, out_channels=10, kernel_size=1)
+    def __init__(self, in_channels, out_channels, stride=1, downsample=None):
+        super().__init__()
+        self.conv1 = DepthwiseSeparableConv2d(in_channels, out_channels, stride=stride)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.conv2 = DepthwiseSeparableConv2d(out_channels, out_channels)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+        self.downsample = downsample
 
     def forward(self, x):
-        # Block 1
-        x = F.relu(self.batch11(self.conv11(x)))
-        x = F.relu(self.batch12(self.conv12(x)))
-        x = F.relu(self.batch13(self.conv13(x)))
-        x = F.relu(self.batch14(self.conv14(x)))
-        x = self.pool14(x)
+        identity = x
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+        out = self.conv2(out)
+        out = self.bn2(out)
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        out += identity
+        out = self.relu(out)
+        return out
 
-        # Block 2
-        x = F.relu(self.batch21(self.conv21(x)))
-        x = F.relu(self.batch22(self.conv22(x)))
-        x = F.relu(self.batch23(self.conv23(x)))
-        x = F.relu(self.batch24(self.conv24(x)))
-        x = self.pool24(x)
 
-        # Block 3
-        x = F.relu(self.batch31(self.conv31(x)))
-        x = F.relu(self.batch32(self.conv32(x)))
-        x = F.relu(self.batch33(self.conv33(x)))
-        x = F.relu(self.batch34(self.conv34(x)))
-        x = self.pool34(x)
+# -----------------------------------
+# 4️⃣ Main ResNet with hybrid flexibility
+# -----------------------------------
+class ResNet(nn.Module):
+    def __init__(self, layers, num_classes=100, base_channels=64, use_depthwise=(False, False, True, True)):
+        """
+        use_depthwise: tuple of 4 bools for [layer1, layer2, layer3, layer4]
+        """
+        super().__init__()
+        self.in_channels = base_channels
 
-        # Final layers
-        x = self.conv_last(x)
-        x = F.adaptive_avg_pool2d(x, (1,1))
-        x = torch.flatten(x,1)
+        self.conv1 = nn.Conv2d(3, base_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(base_channels)
+        self.relu = nn.ReLU(inplace=True)
+
+        # Dynamically choose block type for each layer
+        blocks = []
+        for i, flag in enumerate(use_depthwise):
+            block = DepthwiseBasicBlock if flag else BasicBlock
+            blocks.append(block)
+
+        self.layer1 = self._make_layer(blocks[0], base_channels,   layers[0], stride=1)
+        self.layer2 = self._make_layer(blocks[1], base_channels*2, layers[1], stride=2)
+        self.layer3 = self._make_layer(blocks[2], base_channels*4, layers[2], stride=2)
+        self.layer4 = self._make_layer(blocks[3], base_channels*8, layers[3], stride=2)
+
+        self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
+        self.fc = nn.Linear(base_channels * 8, num_classes)
+
+        # Initialization
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+    def _make_layer(self, block, out_channels, blocks, stride=1):
+        downsample = None
+        if stride != 1 or self.in_channels != out_channels:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_channels)
+            )
+        layers = [block(self.in_channels, out_channels, stride, downsample)]
+        self.in_channels = out_channels
+        for _ in range(1, blocks):
+            layers.append(block(self.in_channels, out_channels))
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
         return x
+
+
