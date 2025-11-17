@@ -2,11 +2,9 @@
 This file demostrates training of ChatGPT-2 model along with embeddings. Trained in Google Colab with final loss of 
 
 # Training Graph
-!['Training Log']('./plot.png')
+![Training Log](plot.png)
 
-# Trainig log
-!['Training Log']('./logs.csv')
-
+# Training Log
 ```csv
 step,loss
 0,11.21
